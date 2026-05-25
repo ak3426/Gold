@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anima Ignis — 3D Acoustic Spirit Field</title>
+    <title>Anima Metamorphosis — 3D Multi-Phase Fire Visualizer</title>
     <style>
         html, body {
             margin: 0;
             padding: 0;
             overflow: hidden;
-            background: #020000; /* Deep Void Black */
+            background: #010000; /* Absolute Dark Void */
             height: 100vh;
             width: 100vw;
         }
@@ -24,7 +24,7 @@
             z-index: 1;
         }
 
-        /* Minimalist Centered Activation Interface */
+        /* Minimalist Start Overlay */
         #ui {
             position: absolute;
             top: 50%;
@@ -34,37 +34,37 @@
         }
 
         button {
-            padding: 18px 36px;
-            background: rgba(0, 0, 0, 0.9);
-            border: 1px solid rgba(255, 80, 20, 0.4);
-            color: rgba(255, 110, 30, 0.9);
+            padding: 20px 40px;
+            background: rgba(0, 0, 0, 0.95);
+            border: 1px solid rgba(255, 60, 0, 0.35);
+            color: rgba(255, 100, 30, 0.9);
             cursor: pointer;
             font-family: Arial, sans-serif;
             font-size: 11px;
-            letter-spacing: 5px;
+            letter-spacing: 6px;
             text-transform: uppercase;
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
             border-radius: 4px;
         }
 
         button:hover {
-            background: #e63900;
-            border-color: #ff9900;
+            background: #ff3c00;
+            border-color: #ffcc00;
             color: #fff;
-            box-shadow: 0 0 40px rgba(230, 57, 0, 0.6);
+            box-shadow: 0 0 50px rgba(255, 60, 0, 0.55);
         }
 
         button.active {
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.6s ease;
+            transition: opacity 0.7s ease;
         }
     </style>
 </head>
 <body>
 
 <div id="ui">
-    <button id="startBtn">Awaken Spirit</button>
+    <button id="startBtn">Initialize Metamorphosis</button>
 </div>
 
 <canvas id="canvas3d"></canvas>
@@ -75,7 +75,7 @@ const gl = canvas.getContext("webgl2");
 const startBtn = document.getElementById("startBtn");
 
 if (!gl) {
-    alert("WebGL 2 is required for this installation.");
+    alert("WebGL 2 context initialization failed.");
 }
 
 const vsSource = `#version 300 es
@@ -100,34 +100,46 @@ const fsSource = `#version 300 es
         return mat2(c, -s, s, c);
     }
 
-    // 3D Scene Geometry (Signed Distance Fields mimicking a swirling human spirit column)
-    float map(vec3 p) {
-        // Tilt camera slightly down to perceive full vertical 3D depth
-        p.yz *= rot(-0.15);
-        
-        // Ethereal continuous upward twist rotation (The Ascension Effect)
-        p.xz *= rot(u_time * 0.4 + p.y * 0.8);
-
-        // Core posture structure mimicking an elegant, stretching human silhouette profile
-        float headSegment = length(p - vec3(0.0, 0.65, 0.0)) - 0.16;
-        
-        // Dynamic torso/spine expansion reacting to overall sound energy
-        float bodyRadius = 0.15 + (sin(p.y * 2.5 - u_time * 2.0) * 0.04) + (u_vol * 0.25);
-        float bodySegment = length(p.xz) - bodyRadius * (1.0 - smoothstep(0.4, 0.8, abs(p.y)));
-
-        // Smoothly combine the anatomical spirit nodes together
-        float spiritForm = min(headSegment, bodySegment);
-
-        // 3D Fire Aura Displacement: Bass inflates the lower foundational core
-        float kineticSurge = sin(p.y * 4.0 - u_time * 5.0) * (0.05 + u_bass * 0.45);
-        
-        // Treble creates rapid, flickering spiritual flames climbing up the column
-        float plasmaFlicker = cos(p.x * 12.0 + u_time * 12.0) * sin(p.z * 12.0 - u_time * 10.0) * (0.01 + u_treble * 0.22);
-
-        return spiritForm - (kineticSurge + plasmaFlicker);
+    // Volumetric 3D Fractal Noise to fracture shapes into multi-body spiritual elements
+    float noise3D(vec3 p) {
+        return sin(p.x * 3.0 + u_time) * cos(p.y * 3.0 - u_time * 1.5) * sin(p.z * 3.0 + u_time * 0.5);
     }
 
-    // Generate directional normals for calculating intense light glints
+    // 3D Scene Geometry (Signed Distance Fields parsing multi-phase transitions)
+    float map(vec3 p) {
+        // Continuous subtle spatial rotation camera matrix
+        p.yz *= rot(0.15 + sin(u_time * 0.2) * 0.1);
+        p.xz *= rot(u_time * 0.15);
+
+        // TRANSFORMATION STEP 1: Core helix structural track coordinates
+        vec3 pHelix = p;
+        pHelix.xz *= rot(pHelix.y * 2.5 + u_time * 1.2);
+        float helixCore = length(pHelix.xz) - (0.12 + u_vol * 0.1);
+
+        // TRANSFORMATION STEP 2: The Nebula Dispersion (Explosive outward force driven by Bass)
+        vec3 pNebula = p;
+        float expansionForce = u_bass * 1.4;
+        float nebulaField = length(pNebula) - (0.45 + expansionForce);
+
+        // TRANSFORMATION STEP 3: High-Treble Tornado Vortex (Aggressive twist displacement)
+        vec3 pVortex = p;
+        pVortex.xz *= rot(u_time * 5.0 + pVortex.y * 6.0 * (1.0 + u_treble * 2.0));
+        float vortexField = length(pVortex.xz) - (0.08 + u_treble * 0.3);
+
+        // Blend all mathematical states seamlessly into one fluid system based on voice registers
+        float blendedState = mix(helixCore, nebulaField, min(u_bass * 1.5, 1.0));
+        blendedState = mix(blendedState, vortexField, min(u_treble * 1.8, 1.0));
+
+        // Fracture the solid structure into hundreds of floating fluid fire globules
+        float fractureWaves = sin(p.x * 14.0) * cos(p.y * 14.0) * sin(p.z * 14.0) * (0.08 + u_vol * 0.35);
+        
+        // Add extreme surface detail using fractal noise
+        float microDetail = noise3D(p * 2.5) * (0.04 + u_treble * 0.2);
+
+        return blendedState + fractureWaves + microDetail;
+    }
+
+    // Generate directional surface angles to capture complex flame illumination highlights
     vec3 getNormal(vec3 p) {
         vec2 e = vec2(0.002, 0.0);
         return normalize(vec3(
@@ -140,73 +152,75 @@ const fsSource = `#version 300 es
     void main() {
         vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / u_resolution.y;
         
-        // Ray Origin (ro) and Camera vector aiming directly at the center of the spirit column
-        vec3 ro = vec3(0.0, 0.1, -2.2); 
+        // Project Raycasting Camera depths
+        vec3 ro = vec3(0.0, 0.0, -2.4); 
         vec3 rd = normalize(vec3(uv * 1.1, 1.0)); 
 
         float dO = 0.0;
         vec3 p;
         bool hit = false;
+        int traceSteps = 0;
 
-        // Perform raymarching scene operations
-        for(int i = 0; i < 90; i++) {
+        // Perform intensive raymarching operations across the fragment fields
+        for(int i = 0; i < 95; i++) {
             p = ro + rd * dO;
             float dS = map(p);
             dO += dS;
-            if(dO > 8.0 || abs(dS) < 0.0008) {
-                if(abs(dS) < 0.0008) hit = true;
+            traceSteps = i;
+            if(dO > 8.0 || abs(dS) < 0.0006) {
+                if(abs(dS) < 0.0006) hit = true;
                 break;
             }
         }
 
-        // Initialize pure dark void baseline canvas backdrop
+        // Initialize spatial void background canvas color
         vec3 finalColor = vec3(0.002, 0.0, 0.0);
 
         if(hit) {
             vec3 n = getNormal(p);
-            vec3 lightPos = vec3(1.0, 3.0, -2.0); // Directional flame light position
+            vec3 lightPos = vec3(1.5, 4.0, -2.5);
             vec3 l = normalize(lightPos - p);
             
             float diff = max(dot(n, l), 0.0);
 
-            // Specular highlighting calculation to produce hyper-polished glossy fire reflections
+            // Calculate highly responsive glossy specular fire sparks
             vec3 viewDir = normalize(ro - p);
             vec3 reflectDir = reflect(-l, n);
             float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
 
-            // THERMAL INFERNO PALETTE VARIABLES
-            vec3 darkSmolder  = vec3(0.15, 0.01, 0.0);   // Quiet baseline embers
-            vec3 phoenixRed   = vec3(0.95, 0.06, 0.0);   // Dominant kinetic energy color
-            vec3 solarYellow  = vec3(1.0, 0.78, 0.05);   // High intensity voice core
-            vec3 whiteGleam   = vec3(1.0, 0.98, 0.92);   // Blinding hot focal spots
+            // EXTREME CONVECTION FLAME GRADIENTS
+            vec3 darkEmber   = vec3(0.12, 0.0, 0.01);    // Quiet shadow pockets
+            vec3 crimsonFire = vec3(0.96, 0.04, 0.0);    // Expanding plasma boundaries
+            vec3 solarGold   = vec3(1.0, 0.72, 0.02);    // Core thermal voice hits
+            vec3 hyperWhite  = vec3(1.0, 0.98, 0.95);    // Blinding focal glints
 
-            // Interpolate color gradients based on vocal performance amplitude
-            vec3 currentAuraColor = mix(darkSmolder, phoenixRed, min(u_vol * 3.5, 1.0));
+            // Transition color metrics depending entirely on global volume amplitude
+            vec3 combustionColor = mix(darkEmber, crimsonFire, min(u_vol * 3.5, 1.0));
             
-            // Electrify the soul field into bright yellow streams as higher vocal frequencies spike
-            currentAuraColor = mix(currentAuraColor, solarYellow, min(u_treble * 3.0, 1.0));
+            // Overdrive the color values into pure yellow-gold when treble registers explode
+            combustionColor = mix(combustionColor, solarGold, min(u_treble * 2.8, 1.0));
 
-            // Merge dynamic 3D shading profiles
-            vec3 surfaceLighting = currentAuraColor * (diff * 0.9 + 0.25);
+            // Merge shading components together
+            vec3 dynamicShading = combustionColor * (diff * 0.9 + 0.2);
             
-            // Add sharp white-hot mirror reflections to mimic blinding solar bursts
-            surfaceLighting += whiteGleam * spec * (0.7 + u_vol * 1.8);
+            // Inject white-hot highlight sparks along fragment surfaces
+            dynamicShading += hyperWhite * spec * (0.75 + u_vol * 1.5);
             
-            // Fresnel rim illumination creating an ethereal spiritual glowing outline
-            float rim = pow(1.0 - max(dot(n, viewDir), 0.0), 2.8);
-            surfaceLighting += mix(phoenixRed, solarYellow, u_treble) * rim * (0.4 + u_bass * 0.85);
+            // Fresnel rim halo calculation to isolate individual fragment outlines cleanly
+            float rim = pow(1.0 - max(dot(n, viewDir), 0.0), 3.0);
+            dynamicShading += mix(crimsonFire, solarGold, u_treble) * rim * (0.35 + u_bass * 0.8);
 
-            finalColor = surfaceLighting;
+            finalColor = dynamicShading;
         }
 
-        // Soft atmospheric vertical aura glow emanating from behind the spirit body
-        float columnGlow = 1.0 - length(uv.x);
-        vec3 ambientOrange = vec3(0.16, 0.02, 0.0);
-        finalColor += ambientOrange * pow(max(columnGlow, 0.0), 4.5) * (0.4 + u_vol * 2.2);
+        // Add volumetric light density scatter tracking with ray loop iteration steps
+        // This causes the edges of the flame body to break out in an organic glowing smoke aura
+        float auraScatter = float(traceSteps) / 95.0;
+        finalColor += vec3(0.15, 0.02, 0.0) * pow(auraScatter, 2.5) * (0.6 + u_vol * 2.0);
 
-        // Standard smooth edge focus vignette frame
+        // Smooth cinematic focus vignette framing
         float vignette = uv.x * uv.x + uv.y * uv.y;
-        finalColor *= (1.0 - vignette * 0.55);
+        finalColor *= (1.0 - vignette * 0.5);
 
         fragColor = vec4(finalColor, 1.0);
     }
@@ -252,7 +266,7 @@ const trebleLoc = gl.getUniformLocation(program, "u_treble");
 
 let analyser, freqData, audioContextCreated = false;
 let sVol = 0, sBass = 0, sTreble = 0;
-const sm = 0.09; // Low-pass filter inertia tuning constant
+const sm = 0.11; // Ultra-reactive low-pass dampener filter variable
 
 startBtn.addEventListener("click", async () => {
     if (audioContextCreated) return;
@@ -262,7 +276,7 @@ startBtn.addEventListener("click", async () => {
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         analyser = audioCtx.createAnalyser();
         analyser.fftSize = 512;
-        analyser.smoothingTimeConstant = 0.76;
+        analyser.smoothingTimeConstant = 0.72; // Snappier response scaling
         
         freqData = new Uint8Array(analyser.frequencyBinCount);
         const source = audioCtx.createMediaStreamSource(stream);
@@ -271,7 +285,7 @@ startBtn.addEventListener("click", async () => {
         startBtn.classList.add("active");
         audioContextCreated = true;
     } catch (err) {
-        console.error("Microphone linkage failure:", err);
+        console.error("Microphone pipeline link error:", err);
         startBtn.textContent = "Error Accessing Mic";
     }
 });
@@ -326,10 +340,10 @@ function animate(timestamp) {
         sBass = sBass * (1 - sm) + rawAudio.bass * sm;
         sTreble = sTreble * (1 - sm) + rawAudio.treble * sm;
     } else {
-        // Slow ambient rising smolder fluctuations before button interaction
-        sVol = sVol * 0.95 + 0.05 * 0.05;
-        sBass = sBass * 0.95 + 0.07 * 0.05;
-        sTreble = sTreble * 0.95 + 0.03 * 0.05;
+        // High-viscosity cosmic drift behavior calculated before user activation
+        sVol = sVol * 0.96 + 0.06 * 0.04;
+        sBass = sBass * 0.96 + 0.08 * 0.04;
+        sTreble = sTreble * 0.96 + 0.04 * 0.04;
     }
 
     gl.clearColor(0.002, 0.0, 0.0, 1.0);
