@@ -3,18 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anima Pulse — 3D Acoustic Heartbeat Visualizer</title>
+    <title>Inferno Pulse — 3D Acoustic Flame Visualizer</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@300;400&family=Space+Grotesk:wght@300&display=swap');
-
         html, body {
             margin: 0;
             padding: 0;
             overflow: hidden;
-            background: #030001; /* Midnight Velvet Black */
+            background: #020000; /* Deepest Void Black */
             height: 100vh;
-            font-family: 'Space Grotesk', sans-serif;
-            color: #fff;
+            width: 100vw;
         }
 
         canvas {
@@ -27,72 +24,47 @@
             z-index: 1;
         }
 
-        /* Minimalist Fine-Art Exhibition Interface */
+        /* Minimalist Activation Trigger overlay */
         #ui {
             position: absolute;
-            top: 50px;
-            left: 50px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             z-index: 100;
-            pointer-events: none; /* Allows clicking through empty space */
-            display: flex;
-            flex-direction: column;
-        }
-
-        h1 {
-            margin: 0;
-            font-family: 'Cinzel', serif;
-            font-weight: 300;
-            font-size: 26px;
-            letter-spacing: 12px;
-            color: rgba(255, 60, 80, 0.8); /* Crimson Title */
-            text-shadow: 0 0 30px rgba(255, 40, 40, 0.25);
-        }
-
-        #subtitle {
-            margin-top: 8px;
-            font-size: 10px;
-            letter-spacing: 5px;
-            color: rgba(255, 60, 80, 0.45);
-            text-transform: uppercase;
-            transition: color 0.4s ease;
         }
 
         button {
-            margin-top: 30px;
-            padding: 16px 32px;
-            background: transparent;
-            border: 1px solid rgba(255, 60, 80, 0.4);
-            color: rgba(255, 80, 100, 0.9);
+            padding: 18px 36px;
+            background: rgba(0, 0, 0, 0.85);
+            border: 1px solid rgba(255, 90, 30, 0.4);
+            color: rgba(255, 120, 40, 0.9);
             cursor: pointer;
-            font-family: 'Space Grotesk', sans-serif;
+            font-family: Arial, sans-serif;
             font-size: 11px;
-            letter-spacing: 4px;
+            letter-spacing: 5px;
             text-transform: uppercase;
-            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-            pointer-events: auto;
-            align-self: flex-start;
+            transition: all 0.4s ease;
+            border-radius: 4px;
         }
 
         button:hover {
-            background: rgba(255, 60, 80, 0.08);
-            border-color: rgba(255, 60, 80, 1);
+            background: #ff4500;
+            border-color: #ffaa00;
             color: #fff;
-            box-shadow: 0 0 30px rgba(255, 60, 80, 0.3);
+            box-shadow: 0 0 40px rgba(255, 68, 0, 0.5);
         }
 
         button.active {
-            opacity: 0.2;
-            border-color: rgba(255, 60, 80, 0.2);
+            opacity: 0;
             pointer-events: none;
+            transition: opacity 0.6s ease;
         }
     </style>
 </head>
 <body>
 
 <div id="ui">
-    <h1>ANIMA PULSE</h1>
-    <div id="subtitle">Biometric Sync: Dormant</div>
-    <button id="startBtn">Activate Mic</button>
+    <button id="startBtn">Ignite Canvas</button>
 </div>
 
 <canvas id="canvas3d"></canvas>
@@ -103,10 +75,9 @@ const gl = canvas.getContext("webgl2");
 const startBtn = document.getElementById("startBtn");
 
 if (!gl) {
-    alert("WebGL 2 is required for this real-time 3D raymarched sculpture.");
+    alert("WebGL 2 is required for this real-time 3D installation.");
 }
 
-// WebGL Vertex Shader (Passes a screen-filling quad)
 const vsSource = `#version 300 es
     in vec2 position;
     void main() {
@@ -114,7 +85,6 @@ const vsSource = `#version 300 es
     }
 `;
 
-// WebGL Fragment Shader (Executes real-time 3D Raymarching with Audio Inputs)
 const fsSource = `#version 300 es
     precision highp float;
     out vec4 fragColor;
@@ -130,32 +100,32 @@ const fsSource = `#version 300 es
         return mat2(c, -s, s, c);
     }
 
-    // 3D Scene Geometry (Signed Distance Fields)
+    // 3D Scene Geometry (Signed Distance Fields mimicking a flickering flame trail)
     float map(vec3 p) {
-        // Perspective twist to create deep 3D spatial alignment
-        p.yz *= rot(0.2);
-        p.xy *= rot(u_time * 0.04);
+        // Perspective adjustment to orient the fire filament in 3D space
+        p.yz *= rot(0.15);
+        p.xy *= rot(u_time * 0.02);
 
-        // Constant baseline resting heartbeat pulse
-        float restingHeartbeat = sin(u_time * 3.8) * 0.12;
-        float dynamicPulse = u_vol * 1.5;
+        // Flame thermal expansion driven by overall volume
+        float baselineFlame = sin(u_time * 5.0) * 0.1;
+        float dynamicFlame = u_vol * 1.8;
         
-        // 3D ECG wave profile: Bass dictates vertical spike amplitude across X-axis layout
-        float ecgSpike = sin(p.x * 2.5 - u_time * 4.5) * cos(p.x * 1.2) * (0.25 + u_bass * 2.2);
+        // Large scale magma convection wave driven by audio bass hits
+        float fireWave = sin(p.x * 2.0 - u_time * 6.0) * cos(p.x * 0.8) * (0.3 + u_bass * 2.5);
         
-        // High frequency treble vibrations create neural micro-fluttering
-        float neuralFlutter = sin(p.x * 16.0 + u_time * 9.0) * (0.01 + u_treble * 0.28);
+        // Fast, unstable micro-flares generated by treble/high-frequency sounds
+        float flameFlicker = sin(p.x * 22.0 + u_time * 15.0) * (0.02 + u_treble * 0.35);
 
-        // Map the geometric 3D tubular cord wrapping around the calculated coordinates
-        float waveLineY = p.y - (ecgSpike + neuralFlutter);
-        float tubeThickness = 0.07 + (u_vol * 0.12) + (sin(p.x * 7.0 + u_time * 4.0) * 0.015);
+        // Draw the 3D thermal stream profile tracking through space
+        float flameY = p.y - (fireWave + flameFlicker);
+        float coreWidth = 0.06 + (u_vol * 0.15) + (sin(p.x * 12.0 + u_time * 8.0) * 0.02);
         
-        float cylinderBody = length(vec2(waveLineY, p.z)) - tubeThickness;
+        float flameBody = length(vec2(flameY, p.z)) - coreWidth;
 
-        return cylinderBody;
+        return flameBody;
     }
 
-    // Calculate surface normals to capture sharp specular flashes
+    // Capture surface directional fields for hot thermal glints
     vec3 getNormal(vec3 p) {
         vec2 e = vec2(0.002, 0.0);
         return normalize(vec3(
@@ -166,75 +136,77 @@ const fsSource = `#version 300 es
     }
 
     void main() {
-        // Standardize coordinates relative to screen dimensions
         vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / u_resolution.y;
         
-        // Camera configurations
-        vec3 ro = vec3(0.0, 0.0, -2.6); 
-        vec3 rd = normalize(vec3(uv * 1.2, 1.0)); 
+        // Position camera viewpoints inside the 3D volume grid
+        vec3 ro = vec3(0.0, 0.0, -2.5); 
+        vec3 rd = normalize(vec3(uv * 1.1, 1.0)); 
 
         float dO = 0.0;
         vec3 p;
         bool hit = false;
 
-        // Perform raymarching loops through the 3D scene grid
-        for(int i = 0; i < 80; i++) {
+        // Execute raymarching intersections
+        for(int i = 0; i < 85; i++) {
             p = ro + rd * dO;
             float dS = map(p);
             dO += dS;
-            if(dO > 10.0 || abs(dS) < 0.001) {
-                if(abs(dS) < 0.001) hit = true;
+            if(dO > 10.0 || abs(dS) < 0.0008) {
+                if(abs(dS) < 0.0008) hit = true;
                 break;
             }
         }
 
-        // Deep cybernetic aesthetic ambient dark backdrop
-        vec3 finalColor = vec3(0.01, 0.0, 0.003);
+        // Empty ash backdrop black color
+        vec3 finalColor = vec3(0.005, 0.0, 0.0);
 
         if(hit) {
             vec3 n = getNormal(p);
-            vec3 lightPos = vec3(1.5, 4.0, -3.0);
+            vec3 lightPos = vec3(0.5, 5.0, -2.5);
             vec3 l = normalize(lightPos - p);
             
             float diff = max(dot(n, l), 0.0);
 
-            // Specular reflections mimicking a liquid-chrome polish sheen
+            // High specular shine coefficient reflecting a polished fiery finish
             vec3 viewDir = normalize(ro - p);
             vec3 reflectDir = reflect(-l, n);
-            float spec = pow(max(dot(viewDir, reflectDir), 0.0), 64.0);
+            float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
 
-            // BIOMETRIC HEAT-SIGNATURE COLORS
-            vec3 darkObsidian  = vec3(0.20, 0.01, 0.03);
-            vec3 activeCrimson = vec3(0.98, 0.05, 0.12);
-            vec3 electricPink  = vec3(1.0, 0.30, 0.65); // Triggered during emotional intensity/treble spikes
-            vec3 polishedSilver = vec3(0.98, 0.95, 1.0);
+            // VOLCANIC FLAME GRADIENT PALETTE
+            vec3 charcoalEmber = vec3(0.18, 0.01, 0.0);   // Cold resting base
+            vec3 volcanicRed   = vec3(0.95, 0.05, 0.0);   // Plasma base color
+            vec3 solarYellow   = vec3(1.0, 0.75, 0.0);    // High energy vocal core
+            vec3 radiantWhite  = vec3(1.0, 0.98, 0.90);   // Blinding white-hot spec
 
-            // Line shifts colors dynamically mapping to vocal audio performance energy
-            vec3 currentPulseColor = mix(darkObsidian, activeCrimson, min(u_vol * 3.5, 1.0));
+            // Blend colors based on localized performance volume metrics
+            vec3 currentFlameColor = mix(charcoalEmber, volcanicRed, min(u_vol * 3.5, 1.0));
             
-            // Blend into bright pink gradients during higher-frequency voice hits
-            currentPulseColor = mix(currentPulseColor, electricPink, min(u_treble * 2.5, 1.0));
+            // Intensify into blistering solar yellows when voice treble registers jump
+            currentFlameColor = mix(currentFlameColor, solarYellow, min(u_treble * 3.0, 1.0));
 
-            // Accumulate physical structural lightning models
-            vec3 lightComposition = currentPulseColor * (diff * 0.85 + 0.25);
+            // Accumulate physical illumination bounds
+            vec3 lightComposition = currentFlameColor * (diff * 0.9 + 0.2);
             
-            // Add hyper-bright mirror highlight reflections based on sound speed spikes
-            lightComposition += polishedSilver * spec * (0.8 + u_vol * 1.6);
+            // Inject white-hot highlight sparks along the edges of the flame body
+            lightComposition += radiantWhite * spec * (0.8 + u_vol * 1.8);
             
-            // Rim/Fresnel illumination glow boundary lines
-            float rim = pow(1.0 - max(dot(n, viewDir), 0.0), 3.0);
-            lightComposition += mix(activeCrimson, electricPink, u_treble) * rim * (0.35 + u_bass * 0.75);
+            // Outer thermal plasma aura lighting edge calculations
+            float rim = pow(1.0 - max(dot(n, viewDir), 0.0), 2.5);
+            lightComposition += mix(volcanicRed, solarYellow, u_treble) * rim * (0.4 + u_bass * 0.9);
 
             finalColor = lightComposition;
         }
 
-        // Ambient background volumetric pulse tracking perfectly with the heartbeat structure
-        float backgroundGlow = 1.0 - length(uv - vec2(0.0, sin(uv.x * 2.5 - u_time * 4.5) * 0.15));
-        finalColor += vec3(0.14, 0.0, 0.02) * pow(max(backgroundGlow, 0.0), 5.5) * (0.4 + u_vol * 2.2);
+        // Background combustion heat haze radiation glow following the line tracking pattern
+        float backgroundGlow = 1.0 - length(uv - vec2(0.0, sin(uv.x * 2.0 - u_time * 6.0) * 0.15));
+        
+        // Combine audio inputs directly to step the ambient orange glow illumination up/down
+        vec3 ambientOrange = vec3(0.18, 0.03, 0.0);
+        finalColor += ambientOrange * pow(max(backgroundGlow, 0.0), 5.0) * (0.5 + u_vol * 2.5);
 
-        // Smooth viewport focus vignette
+        // Soft, cinematic heat vignette focus frame borders
         float vignette = uv.x * uv.x + uv.y * uv.y;
-        finalColor *= (1.0 - vignette * 0.45);
+        finalColor *= (1.0 - vignette * 0.5);
 
         fragColor = vec4(finalColor, 1.0);
     }
@@ -252,7 +224,6 @@ function createShader(gl, type, source) {
     return shader;
 }
 
-// Compile and initialize shader binaries
 const vs = createShader(gl, gl.VERTEX_SHADER, vsSource);
 const fs = createShader(gl, gl.FRAGMENT_SHADER, fsSource);
 const program = gl.createProgram();
@@ -273,17 +244,15 @@ gl.bindVertexArray(vao);
 gl.enableVertexAttribArray(positionAttributeLocation);
 gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
 
-// Map global Uniform references
 const resLoc = gl.getUniformLocation(program, "u_resolution");
 const timeLoc = gl.getUniformLocation(program, "u_time");
 const volLoc = gl.getUniformLocation(program, "u_vol");
 const bassLoc = gl.getUniformLocation(program, "u_bass");
 const trebleLoc = gl.getUniformLocation(program, "u_treble");
 
-// Audio Handling Variables
 let analyser, freqData, audioContextCreated = false;
 let sVol = 0, sBass = 0, sTreble = 0;
-const sm = 0.09; // Low-pass filter smoothing inertia coefficient
+const sm = 0.1; // Increased inertia response speed for sharp flame transformations
 
 startBtn.addEventListener("click", async () => {
     if (audioContextCreated) return;
@@ -293,17 +262,16 @@ startBtn.addEventListener("click", async () => {
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         analyser = audioCtx.createAnalyser();
         analyser.fftSize = 512;
-        analyser.smoothingTimeConstant = 0.78;
+        analyser.smoothingTimeConstant = 0.75;
         
         freqData = new Uint8Array(analyser.frequencyBinCount);
         const source = audioCtx.createMediaStreamSource(stream);
         source.connect(analyser);
 
-        startBtn.textContent = "Mic Connected";
         startBtn.classList.add("active");
         audioContextCreated = true;
     } catch (err) {
-        console.error("Microphone pipeline initialization failure:", err);
+        console.error("Microphone linkage failed:", err);
         startBtn.textContent = "Error Accessing Mic";
     }
 });
@@ -332,25 +300,6 @@ function processAudioData() {
     };
 }
 
-function updateHUDText() {
-    const tracker = document.getElementById('subtitle');
-    if (!audioContextCreated) return;
-
-    if (sVol < 0.04) {
-        tracker.innerText = "Biometric Sync: Resting Pulse (Steady)";
-        tracker.style.color = "rgba(255, 60, 80, 0.4)";
-    } else if (sBass > 0.48) {
-        tracker.innerText = "Biometric Sync: Ventricular Contraction Peak";
-        tracker.style.color = "rgba(255, 40, 40, 0.95)";
-    } else if (sTreble > 0.4) {
-        tracker.innerText = "Biometric Sync: High Frequency Arrhythmia";
-        tracker.style.color = "rgba(255, 110, 190, 0.95)";
-    } else {
-        tracker.innerText = "Biometric Sync: Active Cardiovascular Dialogue";
-        tracker.style.color = "rgba(255, 90, 110, 0.75)";
-    }
-}
-
 function resizeCanvas() {
     if (canvas.width !== window.innerWidth || canvas.height !== window.innerHeight) {
         canvas.width = window.innerWidth;
@@ -366,7 +315,6 @@ function animate(timestamp) {
     requestAnimationFrame(animate);
     resizeCanvas();
 
-    // Smooth time pacing loop
     const delta = (timestamp - lastTime) * 0.001;
     lastTime = timestamp;
     t += delta;
@@ -374,36 +322,31 @@ function animate(timestamp) {
     let rawAudio = processAudioData();
 
     if (audioContextCreated) {
-        // Interpolate current values over physics engine dampening coefficients
         sVol = sVol * (1 - sm) + rawAudio.vol * sm;
         sBass = sBass * (1 - sm) + rawAudio.bass * sm;
         sTreble = sTreble * (1 - sm) + rawAudio.treble * sm;
-        updateHUDText();
     } else {
-        // Aesthetic resting cycle variations before button click
-        sVol = sVol * 0.95 + 0.04 * 0.05;
-        sBass = sBass * 0.95 + 0.07 * 0.05;
-        sTreble = sTreble * 0.95 + 0.03 * 0.05;
+        // Slow ambient smoldering movement pattern pre-click
+        sVol = sVol * 0.95 + 0.05 * 0.05;
+        sBass = sBass * 0.95 + 0.08 * 0.05;
+        sTreble = sTreble * 0.95 + 0.04 * 0.05;
     }
 
-    // Refresh context buffers
-    gl.clearColor(0.01, 0.0, 0.003, 1.0);
+    gl.clearColor(0.005, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     gl.useProgram(program);
     gl.bindVertexArray(vao);
 
-    // Stream inputs to uniform shader memory
     gl.uniform2f(resLoc, gl.canvas.width, gl.canvas.height);
     gl.uniform1f(timeLoc, t);
-    gl.uniform1f(volLoc, sVol * 4.0);     // Boosted scalar modifiers for high-contrast 3D rendering
-    gl.uniform1f(bassLoc, sBass * 3.5);
-    gl.uniform1f(trebleLoc, sTreble * 4.5);
+    gl.uniform1f(volLoc, sVol * 4.5);
+    gl.uniform1f(bassLoc, sBass * 4.0);
+    gl.uniform1f(trebleLoc, sTreble * 5.0);
 
     gl.drawArrays(gl.TRIANGLES, 0, 6);
 }
 
-// Kickstart animation architecture
 animate(0);
 </script>
 </body>
