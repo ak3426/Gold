@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voice-2-Visuals: 3D Aurum Fluid</title>
+    <title>Aurum Metamorphosis — 3D Acoustic Sculpture</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@300;500&family=Space+Grotesk:wght@300&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@300;400&family=Space+Grotesk:wght@300&display=swap');
 
         * {
             box-sizing: border-box;
@@ -14,7 +14,7 @@
         }
 
         body {
-            background: #010100;
+            background: #020100;
             overflow: hidden;
             font-family: 'Space Grotesk', sans-serif;
             color: #fff;
@@ -31,6 +31,7 @@
             z-index: 1;
         }
 
+        /* Minimalist Fine-Art Exhibition Interface */
         #hud {
             position: absolute;
             top: 0;
@@ -42,24 +43,31 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            padding: 40px;
+            padding: 50px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
         }
 
         header h1 {
             font-family: 'Cinzel', serif;
             font-weight: 300;
-            font-size: 24px;
-            letter-spacing: 8px;
-            color: rgba(220, 185, 70, 0.75);
-            text-shadow: 0 0 30px rgba(212, 175, 55, 0.15);
+            font-size: 26px;
+            letter-spacing: 10px;
+            color: rgba(230, 195, 90, 0.8);
+            text-shadow: 0 0 40px rgba(212, 175, 55, 0.2);
         }
 
-        .meta-text {
+        .exhibit-info {
             font-size: 9px;
-            letter-spacing: 3px;
-            color: rgba(255, 255, 255, 0.3);
+            letter-spacing: 4px;
+            color: rgba(255, 255, 255, 0.25);
             text-transform: uppercase;
-            margin-top: 6px;
+            text-align: right;
+            line-height: 1.8;
         }
 
         .controls {
@@ -68,49 +76,64 @@
 
         button {
             background: transparent;
-            border: 1px solid rgba(220, 185, 70, 0.35);
-            color: rgba(220, 185, 70, 0.9);
+            border: 1px solid rgba(230, 195, 90, 0.4);
+            color: rgba(230, 195, 90, 0.9);
             font-family: 'Space Grotesk', sans-serif;
             font-size: 11px;
-            letter-spacing: 3px;
-            padding: 16px 32px;
+            letter-spacing: 4px;
+            padding: 18px 36px;
             cursor: pointer;
             text-transform: uppercase;
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         button:hover {
-            background: rgba(220, 185, 70, 0.08);
-            border-color: rgba(220, 185, 70, 1);
+            background: rgba(230, 195, 90, 0.08);
+            border-color: rgba(230, 195, 90, 1);
             color: #fff;
-            box-shadow: 0 0 25px rgba(220, 185, 70, 0.25);
+            box-shadow: 0 0 30px rgba(230, 195, 90, 0.3);
+        }
+
+        /* Emotional tone descriptor text */
+        #sentiment-tracker {
+            font-size: 10px;
+            letter-spacing: 5px;
+            color: rgba(230, 195, 90, 0.4);
+            text-transform: uppercase;
+            margin-top: 8px;
+            transition: color 0.4s ease;
         }
     </style>
 </head>
 <body>
 
-    <canvas id="webglCanvas"></canvas>
+    <canvas id="sculptureCanvas"></canvas>
 
     <div id="hud">
         <header>
-            <h1>AURUM 3D RESONANCE</h1>
-            <div class="meta-text">Real-Time WebGL2 raymarched Liquid gold sculpture</div>
+            <div>
+                <h1>METAMORPHIC AURUM</h1>
+                <div id="sentiment-tracker">Acoustic Resonance: Dormant</div>
+            </div>
+            <div class="exhibit-info">
+                Installation No. 04<br>
+                Raymarched Generative Fluid Mesh
+            </div>
         </header>
 
         <div class="controls">
-            <button id="start-btn">Initialize 3D Simulation</button>
+            <button id="start-btn">Wake Installation</button>
         </div>
     </div>
 
     <script>
-        const canvas = document.getElementById('webglCanvas');
+        const canvas = document.getElementById('sculptureCanvas');
         const gl = canvas.getContext('webgl2');
 
         if (!gl) {
-            alert('WebGL 2 is required for this 3D installation.');
+            alert('WebGL 2 is required for this generative 3D installation.');
         }
 
-        // WebGL Vertex Shader Source
         const vsSource = `#version 300 es
             in vec2 position;
             void main() {
@@ -118,7 +141,6 @@
             }
         `;
 
-        // WebGL Fragment Shader Source (Renders the 3D Liquid Gold via Raymarching)
         const fsSource = `#version 300 es
             precision highp float;
             out vec4 fragColor;
@@ -130,30 +152,55 @@
             uniform float u_mid;
             uniform float u_high;
 
-            // Simple 3D Noise functions to warp the gold mesh organically
             mat2 rot(float a) {
                 float c = cos(a), s = sin(a);
                 return mat2(c, -s, s, c);
             }
 
-            float map(vec3 p) {
-                // Introduce liquid distortion waves via audio variables
-                vec3 p_distorted = p;
-                p_distorted.xy *= rot(u_time * 0.12 + u_mid * 0.2);
-                p_distorted.xz *= rot(u_time * 0.08);
-
-                // Fluid wave math simulating surface displacement
-                float wave1 = sin(p_distorted.x * 2.5 + u_time) * cos(p_distorted.y * 2.5 + u_time) * (0.15 + u_bass * 0.4);
-                float wave2 = sin(p_distorted.z * 5.0 - u_time * 1.5) * (0.05 + u_high * 0.2);
-                
-                // Base 3D Sphere mass that melts out
-                float baseSphere = length(p) - (1.1 + u_rms * 0.5);
-                return baseSphere + wave1 + wave2;
+            // Exponential smooth minimum function to melt 3D bodies together perfectly
+            float smin(float a, float b, float k) {
+                float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
+                return mix(b, a, h) - k * h * (1.0 - h);
             }
 
-            // Calculate exact surface light reflection normals
+            // 3D Scene Geometry (Signed Distance Fields)
+            float map(vec3 p) {
+                // Fluid swirling rotations driven smoothly by vocal presence
+                vec3 p1 = p;
+                p1.xy *= rot(u_time * 0.15 + u_mid * 0.1);
+                p1.xz *= rot(u_time * 0.1);
+
+                // Body 1: Core liquid anchor mass
+                float coreRadius = 0.75 + sin(u_time * 0.8) * 0.1 + (u_bass * 0.3);
+                float body1 = length(p1) - coreRadius;
+
+                // Body 2 & 3: Satellite droplets spinning out and breaking apart dynamically
+                vec3 p2 = p;
+                float orbitRadius = 1.3 + sin(u_time * 1.2) * 0.2 + (u_mid * 0.5);
+                p2.xy *= rot(u_time * 0.5 + u_high * 0.4);
+                p2.x += orbitRadius;
+                float body2 = length(p2) - (0.35 + sin(u_time * 3.0) * 0.08 + u_high * 0.25);
+
+                vec3 p3 = p;
+                p3.yz *= rot(-u_time * 0.4 - u_bass * 0.3);
+                p3.y -= orbitRadius * 0.9;
+                float body3 = length(p3) - (0.3 + u_bass * 0.2);
+
+                // Melt all 3 fluid bodies together via an acoustic viscosity factor
+                float viscosity = 0.55 + (u_rms * 0.3);
+                float combinedFluid = smin(body1, body2, viscosity);
+                combinedFluid = smin(combinedFluid, body3, viscosity);
+
+                // Complex organic surface micro-tearing layers
+                float microWaves = sin(p.x * 6.0 + u_time * 2.0) * cos(p.y * 6.0 - u_time) * (0.05 + u_mid * 0.18);
+                float highSibilanceTear = sin(p.z * 14.0 + u_time * 4.0) * (0.01 + u_high * 0.09);
+
+                return combinedFluid + microWaves + highSibilanceTear;
+            }
+
+            // Normals generation to catch dynamic reflection angles
             vec3 getNormal(vec3 p) {
-                vec2 e = vec2(0.002, 0.0);
+                vec2 e = vec2(0.003, 0.0);
                 return normalize(vec3(
                     map(p + e.xyy) - map(p - e.xyy),
                     map(p + e.yxy) - map(p - e.yxy),
@@ -163,67 +210,79 @@
 
             void main() {
                 vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / u_resolution.y;
-                vec3 ro = vec3(0.0, 0.0, -3.2); // 3D Camera Position
-                vec3 rd = normalize(vec3(uv, 1.0));   // Ray Direction
+                
+                // Deep, physical atmospheric camera layout
+                vec3 ro = vec3(0.0, 0.0, -3.5); 
+                vec3 rd = normalize(vec3(uv, 1.2)); 
 
                 float dO = 0.0;
                 vec3 p;
                 bool hit = false;
 
-                // Raymarching Loop step into 3D Space
-                for(int i = 0; i < 70; i++) {
+                // Trace calculations
+                for(int i = 0; i < 80; i++) {
                     p = ro + rd * dO;
                     float dS = map(p);
                     dO += dS;
-                    if(dO > 10.0 || abs(dS) < 0.001) {
-                        if(abs(dS) < 0.001) hit = true;
+                    if(dO > 12.0 || abs(dS) < 0.0008) {
+                        if(abs(dS) < 0.0008) hit = true;
                         break;
                     }
                 }
 
-                // Initial Dark Ambient Backdrop
-                vec3 color = vec3(0.015, 0.01, 0.002);
+                // Dark ambient exhibition space backdrop color
+                vec3 finalColor = vec3(0.01, 0.008, 0.003);
 
                 if(hit) {
                     vec3 n = getNormal(p);
-                    vec3 lightPos = vec3(2.0, 4.0, -4.0); // Dynamic light position
-                    vec3 l = normalize(lightPos - p);
+                    vec3 lightPos1 = vec3(3.0 * sin(u_time * 0.5), 5.0, -4.0);
+                    vec3 lightPos2 = vec3(-4.0, -2.0, -2.0); // Moody bottom filler light
                     
-                    // Diffuse metallic lighting calculation
-                    float diff = max(dot(n, l), 0.0);
+                    vec3 l1 = normalize(lightPos1 - p);
+                    vec3 l2 = normalize(lightPos2 - p);
+                    
+                    float diff1 = max(dot(n, l1), 0.0);
+                    float diff2 = max(dot(n, l2), 0.0);
 
-                    // Specular Highlight calculation (creates that sharp polished shine)
+                    // Specular calculations for polished liquid surface shines
                     vec3 viewDir = normalize(ro - p);
-                    vec3 reflectDir = reflect(-l, n);
-                    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
+                    vec3 reflectDir1 = reflect(-l1, n);
+                    float spec1 = pow(max(dot(viewDir, reflectDir1), 0.0), 40.0);
 
-                    // Professional 24 Karat Gold color palette variables
-                    vec3 goldBase = vec3(0.82, 0.61, 0.18);
-                    vec3 goldShadow = vec3(0.31, 0.18, 0.02);
-                    vec3 goldHighlight = vec3(1.0, 0.94, 0.78);
+                    // EMOTIONAL GRADIENT MAPPING (Acoustic Heat-Signature Colors)
+                    // Deep Bronze Base -> Radiant 24K Gold -> Rose Gold / Violet Iridescence
+                    vec3 bronzeShadow = vec3(0.22, 0.12, 0.01);
+                    vec3 classicGold  = vec3(0.85, 0.64, 0.15);
+                    vec3 violetAlloy  = vec3(0.95, 0.35, 0.55); // Triggered during emotional vocal intensity spikes
+                    vec3 hotSpecular  = vec3(1.0, 0.96, 0.85);
 
-                    // Mix structural illumination zones dynamically
-                    vec3 metallicSurface = mix(goldShadow, goldBase, diff);
+                    // Interpolate surface coloration dynamically according to vocal energy bands
+                    vec3 currentBaseMetal = mix(bronzeShadow, classicGold, min(u_rms * 2.5, 1.0));
                     
-                    // React bright and liquid hot on audio impact spikes
-                    metallicSurface += goldHighlight * spec * (0.7 + u_rms * 0.8);
-                    
-                    // Subtle subsurface rim light glow
-                    float rim = pow(1.0 - max(dot(n, viewDir), 0.0), 4.0);
-                    metallicSurface += vec3(0.9, 0.75, 0.3) * rim * 0.4;
+                    // Shift palette boundaries towards warm Rose / Violet alloys when high frequencies spike
+                    currentBaseMetal = mix(currentBaseMetal, violetAlloy, min(u_high * 2.2, 1.0));
 
-                    color = metallicSurface;
+                    // Final fragment illumination pass
+                    vec3 surfaceLighting = currentBaseMetal * (diff1 * 0.9 + diff2 * 0.25);
+                    
+                    // Add polished mirror reflection flares
+                    surfaceLighting += hotSpecular * spec1 * (0.8 + u_rms * 1.2);
+                    
+                    // Subsurface glowing rim reflections
+                    float rim = pow(1.0 - max(dot(n, viewDir), 0.0), 3.5);
+                    surfaceLighting += mix(classicGold, violetAlloy, u_high) * rim * (0.35 + u_bass * 0.5);
+
+                    finalColor = surfaceLighting;
                 }
 
-                // Cinematic vignette layer
+                // Vignette detailing to ground visual weight focus
                 float vignette = uv.x * uv.x + uv.y * uv.y;
-                color *= (1.0 - vignette * 0.35);
+                finalColor *= (1.0 - vignette * 0.4);
 
-                fragColor = vec4(color, 1.0);
+                fragColor = vec4(finalColor, 1.0);
             }
         `;
 
-        // Helper compile pipeline function
         function createShader(gl, type, source) {
             const shader = gl.createShader(type);
             gl.shaderSource(shader, source);
@@ -256,7 +315,6 @@
         gl.enableVertexAttribArray(positionAttributeLocation);
         gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
 
-        // Map Uniform memory references
         const resLoc = gl.getUniformLocation(program, "u_resolution");
         const timeLoc = gl.getUniformLocation(program, "u_time");
         const rmsLoc = gl.getUniformLocation(program, "u_rms");
@@ -264,13 +322,11 @@
         const midLoc = gl.getUniformLocation(program, "u_mid");
         const highLoc = gl.getUniformLocation(program, "u_high");
 
-        // Audio node system configurations
         let audioCtx, analyser, source, freqData, timeData;
         let isRunning = false;
 
-        // Inertial damping parameters
         let sRMS = 0, sBass = 0, sMid = 0, sHigh = 0;
-        const sm = 0.08; 
+        const sm = 0.07; 
 
         document.getElementById('start-btn').addEventListener('click', async function() {
             if (isRunning) return;
@@ -278,7 +334,7 @@
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             analyser = audioCtx.createAnalyser();
             analyser.fftSize = 1024;
-            analyser.smoothingTimeConstant = 0.8;
+            analyser.smoothingTimeConstant = 0.82;
 
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -292,7 +348,7 @@
                 this.style.display = 'none';
                 loop(0);
             } catch (err) {
-                alert('Microphone streamline required for 3D simulation.');
+                alert('Microphone streamline required for interactive installation.');
             }
         });
 
@@ -317,6 +373,26 @@
             }
         }
 
+        // Updates textual UI descriptor according to emotional data trends
+        function updateSentimentText() {
+            const tracker = document.getElementById('sentiment-tracker');
+            if (!isRunning) return;
+
+            if (sRMS < 0.05) {
+                tracker.innerText = "Acoustic Resonance: Quiet Contemplation";
+                tracker.style.color = "rgba(230, 195, 90, 0.3)";
+            } else if (sHigh > 0.45) {
+                tracker.innerText = "Acoustic Resonance: High Expression / Sibilance Peak";
+                tracker.style.color = "rgba(240, 120, 160, 0.8)";
+            } else if (sBass > 0.5) {
+                tracker.innerText = "Acoustic Resonance: Deep Core Resonance";
+                tracker.style.color = "rgba(230, 170, 50, 0.8)";
+            } else {
+                tracker.innerText = "Acoustic Resonance: Fluid Dialogue";
+                tracker.style.color = "rgba(230, 195, 90, 0.6)";
+            }
+        }
+
         function loop(timestamp) {
             requestAnimationFrame(loop);
             resizeCanvas();
@@ -335,31 +411,30 @@
                 let rms = Math.sqrt(rmsSum / timeData.length);
 
                 const sr = audioCtx.sampleRate;
-                const bass = getBandEnergy(freqData, sr, 20, 200);
-                const mid = getBandEnergy(freqData, sr, 200, 2000);
-                const high = getBandEnergy(freqData, sr, 2000, 10000);
+                const bass = getBandEnergy(freqData, sr, 20, 220);
+                const mid = getBandEnergy(freqData, sr, 220, 2000);
+                const high = getBandEnergy(freqData, sr, 2000, 11000);
 
-                // Smooth raw capture metrics out
-                sRMS = sRMS * (1 - sm) + rms * sm * 3.5;
-                sBass = sBass * (1 - sm) + bass * sm * 3.0;
-                sMid = sMid * (1 - sm) + mid * sm * 3.0;
-                sHigh = sHigh * (1 - sm) + high * sm * 3.5;
+                sRMS = sRMS * (1 - sm) + rms * sm * 4.0;
+                sBass = sBass * (1 - sm) + bass * sm * 3.5;
+                sMid = sMid * (1 - sm) + mid * sm * 3.5;
+                sHigh = sHigh * (1 - sm) + high * sm * 4.5;
+
+                updateSentimentText();
             } else {
-                // Gentle idle wave motions
+                // Rhythmic idle drift loops before click interaction
                 sRMS = sRMS * 0.95 + 0.04 * 0.05;
-                sBass = sBass * 0.95 + 0.08 * 0.05;
+                sBass = sBass * 0.95 + 0.07 * 0.05;
                 sMid = sMid * 0.95 + 0.06 * 0.05;
-                sHigh = sHigh * 0.95 + 0.03 * 0.05;
+                sHigh = sHigh * 0.95 + 0.02 * 0.05;
             }
 
-            // WebGL pipeline configuration execution
             gl.clearColor(0.01, 0.01, 0.0, 1.0);
             gl.clear(gl.COLOR_BUFFER_BIT);
 
             gl.useProgram(program);
             gl.bindVertexArray(vao);
 
-            // Forward uniform values directly into GPU 3D pipelines
             gl.uniform2f(resLoc, gl.canvas.width, gl.canvas.height);
             gl.uniform1f(timeLoc, t);
             gl.uniform1f(rmsLoc, sRMS);
@@ -370,11 +445,9 @@
             gl.drawArrays(gl.TRIANGLES, 0, 6);
         }
 
-        // Keep ambient looping system awake pre-click
         if (!isRunning) {
             loop(0);
         }
     </script>
 </body>
-</html>
 </html>
