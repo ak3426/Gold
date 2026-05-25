@@ -3,22 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anima Pulse — 3D Acoustic Heartbeat Sculpture</title>
+    <title>Anima Pulse — 3D Acoustic Heartbeat Visualizer</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@300;400&family=Space+Grotesk:wght@300&display=swap');
 
-        * {
-            box-sizing: border-box;
+        html, body {
             margin: 0;
             padding: 0;
-        }
-
-        body {
-            background: #030001; /* Midnight Velvet Black */
             overflow: hidden;
+            background: #030001; /* Midnight Velvet Black */
+            height: 100vh;
             font-family: 'Space Grotesk', sans-serif;
             color: #fff;
-            height: 100vh;
         }
 
         canvas {
@@ -31,60 +27,50 @@
             z-index: 1;
         }
 
-        /* Minimalist Fine-Art Exhibition HUD */
-        #hud {
+        /* Minimalist Fine-Art Exhibition Interface */
+        #ui {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 10;
-            pointer-events: none;
+            top: 50px;
+            left: 50px;
+            z-index: 100;
+            pointer-events: none; /* Allows clicking through empty space */
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-            padding: 50px;
         }
 
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-        }
-
-        header h1 {
+        h1 {
+            margin: 0;
             font-family: 'Cinzel', serif;
             font-weight: 300;
-            font-size: 24px;
+            font-size: 26px;
             letter-spacing: 12px;
-            color: rgba(255, 60, 80, 0.75); /* Crimson HUD */
-            text-shadow: 0 0 30px rgba(255, 40, 40, 0.2);
+            color: rgba(255, 60, 80, 0.8); /* Crimson Title */
+            text-shadow: 0 0 30px rgba(255, 40, 40, 0.25);
         }
 
-        .exhibit-info {
-            font-size: 9px;
-            letter-spacing: 4px;
-            color: rgba(255, 255, 255, 0.25);
+        #subtitle {
+            margin-top: 8px;
+            font-size: 10px;
+            letter-spacing: 5px;
+            color: rgba(255, 60, 80, 0.45);
             text-transform: uppercase;
-            text-align: right;
-            line-height: 1.8;
-        }
-
-        .controls {
-            pointer-events: auto;
+            transition: color 0.4s ease;
         }
 
         button {
+            margin-top: 30px;
+            padding: 16px 32px;
             background: transparent;
-            border: 1px solid rgba(255, 60, 80, 0.35);
+            border: 1px solid rgba(255, 60, 80, 0.4);
             color: rgba(255, 80, 100, 0.9);
+            cursor: pointer;
             font-family: 'Space Grotesk', sans-serif;
             font-size: 11px;
             letter-spacing: 4px;
-            padding: 18px 36px;
-            cursor: pointer;
             text-transform: uppercase;
             transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: auto;
+            align-self: flex-start;
         }
 
         button:hover {
@@ -94,346 +80,331 @@
             box-shadow: 0 0 30px rgba(255, 60, 80, 0.3);
         }
 
-        #pulse-status {
-            font-size: 10px;
-            letter-spacing: 5px;
-            color: rgba(255, 60, 80, 0.45);
-            text-transform: uppercase;
-            margin-top: 8px;
-            transition: color 0.4s ease;
+        button.active {
+            opacity: 0.2;
+            border-color: rgba(255, 60, 80, 0.2);
+            pointer-events: none;
         }
     </style>
 </head>
 <body>
 
-    <canvas id="pulseCanvas"></canvas>
+<div id="ui">
+    <h1>ANIMA PULSE</h1>
+    <div id="subtitle">Biometric Sync: Dormant</div>
+    <button id="startBtn">Activate Mic</button>
+</div>
 
-    <div id="hud">
-        <header>
-            <div>
-                <h1>ANIMA PULSE</h1>
-                <div id="pulse-status">Biometric Sync: Resting</div>
-            </div>
-            <div class="exhibit-info">
-                Installation No. 05<br>
-                Raymarched 3D ECG Kinetic Waves
-            </div>
-        </header>
+<canvas id="canvas3d"></canvas>
 
-        <div class="controls">
-            <button id="start-btn">Initialize Pulse Monitor</button>
-        </div>
-    </div>
+<script>
+const canvas = document.getElementById("canvas3d");
+const gl = canvas.getContext("webgl2");
+const startBtn = document.getElementById("startBtn");
 
-    <script>
-        const canvas = document.getElementById('pulseCanvas');
-        const gl = canvas.getContext('webgl2');
+if (!gl) {
+    alert("WebGL 2 is required for this real-time 3D raymarched sculpture.");
+}
 
-        if (!gl) {
-            alert('WebGL 2 is required for this installation.');
-        }
+// WebGL Vertex Shader (Passes a screen-filling quad)
+const vsSource = `#version 300 es
+    in vec2 position;
+    void main() {
+        gl_Position = vec4(position, 0.0, 1.0);
+    }
+`;
 
-        const vsSource = `#version 300 es
-            in vec2 position;
-            void main() {
-                gl_Position = vec4(position, 0.0, 1.0);
-            }
-        `;
+// WebGL Fragment Shader (Executes real-time 3D Raymarching with Audio Inputs)
+const fsSource = `#version 300 es
+    precision highp float;
+    out vec4 fragColor;
 
-        const fsSource = `#version 300 es
-            precision highp float;
-            out vec4 fragColor;
+    uniform vec2 u_resolution;
+    uniform float u_time;
+    uniform float u_vol;
+    uniform float u_bass;
+    uniform float u_treble;
 
-            uniform vec2 u_resolution;
-            uniform float u_time;
-            uniform float u_rms;
-            uniform float u_bass;
-            uniform float u_mid;
-            uniform float u_high;
+    mat2 rot(float a) {
+        float c = cos(a), s = sin(a);
+        return mat2(c, -s, s, c);
+    }
 
-            mat2 rot(float a) {
-                float c = cos(a), s = sin(a);
-                return mat2(c, -s, s, c);
-            }
+    // 3D Scene Geometry (Signed Distance Fields)
+    float map(vec3 p) {
+        // Perspective twist to create deep 3D spatial alignment
+        p.yz *= rot(0.2);
+        p.xy *= rot(u_time * 0.04);
 
-            // 3D Scene Geometry: A kinetic cardiac ribbon tube
-            float map(vec3 p) {
-                // Twist and angle the view slightly for 3D depth perspective
-                p.yz *= rot(0.25);
-                p.xy *= rot(u_time * 0.05);
+        // Constant baseline resting heartbeat pulse
+        float restingHeartbeat = sin(u_time * 3.8) * 0.12;
+        float dynamicPulse = u_vol * 1.5;
+        
+        // 3D ECG wave profile: Bass dictates vertical spike amplitude across X-axis layout
+        float ecgSpike = sin(p.x * 2.5 - u_time * 4.5) * cos(p.x * 1.2) * (0.25 + u_bass * 2.2);
+        
+        // High frequency treble vibrations create neural micro-fluttering
+        float neuralFlutter = sin(p.x * 16.0 + u_time * 9.0) * (0.01 + u_treble * 0.28);
 
-                // Replicate natural heartbeat contraction rhythms using time
-                float restingHeartbeat = sin(u_time * 3.5) * 0.15;
-                // Voice volume expands the physical movement spikes dramatically
-                float dynamicPulse = u_rms * 1.6;
-                float totalPulse = restingHeartbeat + dynamicPulse;
+        // Map the geometric 3D tubular cord wrapping around the calculated coordinates
+        float waveLineY = p.y - (ecgSpike + neuralFlutter);
+        float tubeThickness = 0.07 + (u_vol * 0.12) + (sin(p.x * 7.0 + u_time * 4.0) * 0.015);
+        
+        float cylinderBody = length(vec2(waveLineY, p.z)) - tubeThickness;
 
-                // Create a dynamic mathematical wave mimicking an ECG electrical graph
-                // As the wave tracks left-to-right (p.x), sound pushes extreme vertical spikes
-                float ecgSpike = sin(p.x * 3.0 - u_time * 4.0) * cos(p.x * 1.5) * (0.2 + u_bass * 1.8);
-                
-                // Fine, sharp neural fluttering caused by higher vocals/whispers
-                float neuralFlutter = sin(p.x * 15.0 + u_time * 8.0) * (0.02 + u_high * 0.25);
+        return cylinderBody;
+    }
 
-                // Calculate standard 3D cylinder/tube distance line stretching across screen
-                float waveLineY = p.y - (ecgSpike + neuralFlutter);
-                float tubeThickness = 0.08 + (u_mid * 0.15) + (sin(p.x * 8.0 + u_time * 5.0) * 0.02);
-                
-                float cylinderBody = length(vec2(waveLineY, p.z)) - tubeThickness;
+    // Calculate surface normals to capture sharp specular flashes
+    vec3 getNormal(vec3 p) {
+        vec2 e = vec2(0.002, 0.0);
+        return normalize(vec3(
+            map(p + e.xyy) - map(p - e.xyy),
+            map(p + e.yxy) - map(p - e.yxy),
+            map(p + e.yyx) - map(p - e.yyx)
+        ));
+    }
 
-                return cylinderBody;
-            }
+    void main() {
+        // Standardize coordinates relative to screen dimensions
+        vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / u_resolution.y;
+        
+        // Camera configurations
+        vec3 ro = vec3(0.0, 0.0, -2.6); 
+        vec3 rd = normalize(vec3(uv * 1.2, 1.0)); 
 
-            // Generate surface physics normals to catch bright reflections
-            vec3 getNormal(vec3 p) {
-                vec2 e = vec2(0.002, 0.0);
-                return normalize(vec3(
-                    map(p + e.xyy) - map(p - e.xyy),
-                    map(p + e.yxy) - map(p - e.yxy),
-                    map(p + e.yyx) - map(p - e.yyx)
-                ));
-            }
+        float dO = 0.0;
+        vec3 p;
+        bool hit = false;
 
-            void main() {
-                // Coordinates mapping
-                vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / u_resolution.y;
-                
-                // Perspective Camera Lookat Positioning
-                vec3 ro = vec3(0.0, 0.0, -2.8); 
-                vec3 rd = normalize(vec3(uv * 1.3, 1.0)); 
-
-                float dO = 0.0;
-                vec3 p;
-                bool hit = false;
-
-                // Raymarched geometric distance calculations
-                for(int i = 0; i < 75; i++) {
-                    p = ro + rd * dO;
-                    float dS = map(p);
-                    dO += dS;
-                    if(dO > 10.0 || abs(dS) < 0.001) {
-                        if(abs(dS) < 0.001) hit = true;
-                        break;
-                    }
-                }
-
-                // Dark Cyber-Medical Aesthetic Ambient Base Color
-                vec3 color = vec3(0.01, 0.0, 0.002);
-
-                if(hit) {
-                    vec3 n = getNormal(p);
-                    vec3 lightPos = vec3(1.0, 4.0, -3.0);
-                    vec3 l = normalize(lightPos - p);
-                    
-                    float diff = max(dot(n, l), 0.0);
-
-                    // High-end mirror specular light reflection calculation
-                    vec3 viewDir = normalize(ro - p);
-                    vec3 reflectDir = reflect(-l, n);
-                    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 64.0);
-
-                    // HIGH INTENSITY PALETTE (Crimson Red, Electrical Hot Metallic Pink, Polish Silver)
-                    vec3 darkVessel     = vec3(0.25, 0.01, 0.04);
-                    vec3 activeCrimson   = vec3(0.95, 0.05, 0.15);
-                    vec3 electricRose    = vec3(1.0, 0.25, 0.6);   // Unleashed during high frequency vocal tension
-                    vec3 specularChrome  = vec3(1.0, 0.95, 0.98);
-
-                    // Blend colors dynamically based on vocal output levels
-                    vec3 currentPulseColor = mix(darkVessel, activeCrimson, min(u_rms * 3.0, 1.0));
-                    
-                    // Electrify lines with hot rose spikes during high/sharp vocals
-                    currentPulseColor = mix(currentPulseColor, electricRose, min(u_high * 2.5, 1.0));
-
-                    // Combine light metrics
-                    vec3 structuralIllumination = currentPulseColor * (diff * 0.8 + 0.3);
-                    
-                    // Add polished glass/chrome highlight reflection spikes
-                    structuralIllumination += specularChrome * spec * (0.9 + u_rms * 1.5);
-                    
-                    // Intense neon outer light envelope glow
-                    float rim = pow(1.0 - max(dot(n, viewDir), 0.0), 3.0);
-                    structuralIllumination += mix(activeCrimson, electricRose, u_high) * rim * (0.4 + u_bass * 0.8);
-
-                    color = structuralIllumination;
-                }
-
-                // Soft background field aura glow tracker centering behind the pulse line
-                float backgroundGlow = 1.0 - length(uv - vec2(0.0, sin(uv.x * 3.0 - u_time * 4.0) * 0.15));
-                color += vec3(0.12, 0.0, 0.02) * pow(max(backgroundGlow, 0.0), 6.0) * (0.5 + u_rms * 2.0);
-
-                // Clean cinematic viewport vignette
-                float vignette = uv.x * uv.x + uv.y * uv.y;
-                color *= (1.0 - vignette * 0.5);
-
-                fragColor = vec4(color, 1.0);
-            }
-        `;
-
-        function createShader(gl, type, source) {
-            const shader = gl.createShader(type);
-            gl.shaderSource(shader, source);
-            gl.compileShader(shader);
-            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-                console.error(gl.getShaderInfoLog(shader));
-                gl.deleteShader(shader);
-                return null;
-            }
-            return shader;
-        }
-
-        const vs = createShader(gl, gl.VERTEX_SHADER, vsSource);
-        const fs = createShader(gl, gl.FRAGMENT_SHADER, fsSource);
-        const program = gl.createProgram();
-        gl.attachShader(program, vs);
-        gl.attachShader(program, fs);
-        gl.linkProgram(program);
-
-        const positionAttributeLocation = gl.getAttribLocation(program, "position");
-        const positionBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-            -1, -1,   1, -1,  -1,  1,
-            -1,  1,   1, -1,   1,  1,
-        ]), gl.STATIC_DRAW);
-
-        const vao = gl.createVertexArray();
-        gl.bindVertexArray(vao);
-        gl.enableVertexAttribArray(positionAttributeLocation);
-        gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
-
-        const resLoc = gl.getUniformLocation(program, "u_resolution");
-        const timeLoc = gl.getUniformLocation(program, "u_time");
-        const rmsLoc = gl.getUniformLocation(program, "u_rms");
-        const bassLoc = gl.getUniformLocation(program, "u_bass");
-        const midLoc = gl.getUniformLocation(program, "u_mid");
-        const highLoc = gl.getUniformLocation(program, "u_high");
-
-        let audioCtx, analyser, source, freqData, timeData;
-        let isRunning = false;
-
-        let sRMS = 0, sBass = 0, sMid = 0, sHigh = 0;
-        const sm = 0.08; // Inertia tracking dampener constant
-
-        document.getElementById('start-btn').addEventListener('click', async function() {
-            if (isRunning) return;
-
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            analyser = audioCtx.createAnalyser();
-            analyser.fftSize = 1024;
-            analyser.smoothingTimeConstant = 0.8;
-
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                source = audioCtx.createMediaStreamSource(stream);
-                source.connect(analyser);
-                
-                freqData = new Uint8Array(analyser.frequencyBinCount);
-                timeData = new Uint8Array(analyser.frequencyBinCount);
-                
-                isRunning = true;
-                this.style.display = 'none';
-                loop(0);
-            } catch (err) {
-                alert('Microphone pipeline streamline required.');
-            }
-        });
-
-        function getBandEnergy(data, lowHz, highHz, sampleRate) {
-            let sum = 0, count = 0;
-            const step = sampleRate / analyser.fftSize;
-            for (let i = 0; i < data.length; i++) {
-                const hz = i * step;
-                if (hz >= lowHz && hz <= highHz) {
-                    sum += data[i] / 255;
-                    count++;
-                }
-            }
-            return count > 0 ? sum / count : 0;
-        }
-
-        // Interface monitor textual updating loop
-        function updatePulseStatus() {
-            const tracker = document.getElementById('pulse-status');
-            if (!isRunning) return;
-
-            if (sRMS < 0.04) {
-                tracker.innerText = "Biometric Sync: Resting Pulse (Normal)";
-                tracker.style.color = "rgba(255, 60, 80, 0.4)";
-            } else if (sMid > 0.45 || sBass > 0.5) {
-                tracker.innerText = "Biometric Sync: High Ventricle Distension Peak";
-                tracker.style.color = "rgba(255, 40, 40, 0.9)";
-            } else if (sHigh > 0.4) {
-                tracker.innerText = "Biometric Sync: Neural Sibilance Arrhythmia";
-                tracker.style.color = "rgba(255, 100, 180, 0.9)";
-            } else {
-                tracker.innerText = "Biometric Sync: Rhythmic Activity Recorded";
-                tracker.style.color = "rgba(255, 80, 100, 0.7)";
+        // Perform raymarching loops through the 3D scene grid
+        for(int i = 0; i < 80; i++) {
+            p = ro + rd * dO;
+            float dS = map(p);
+            dO += dS;
+            if(dO > 10.0 || abs(dS) < 0.001) {
+                if(abs(dS) < 0.001) hit = true;
+                break;
             }
         }
 
-        function resizeCanvas() {
-            if (canvas.width !== window.innerWidth || canvas.height !== window.innerHeight) {
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
-                gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-            }
+        // Deep cybernetic aesthetic ambient dark backdrop
+        vec3 finalColor = vec3(0.01, 0.0, 0.003);
+
+        if(hit) {
+            vec3 n = getNormal(p);
+            vec3 lightPos = vec3(1.5, 4.0, -3.0);
+            vec3 l = normalize(lightPos - p);
+            
+            float diff = max(dot(n, l), 0.0);
+
+            // Specular reflections mimicking a liquid-chrome polish sheen
+            vec3 viewDir = normalize(ro - p);
+            vec3 reflectDir = reflect(-l, n);
+            float spec = pow(max(dot(viewDir, reflectDir), 0.0), 64.0);
+
+            // BIOMETRIC HEAT-SIGNATURE COLORS
+            vec3 darkObsidian  = vec3(0.20, 0.01, 0.03);
+            vec3 activeCrimson = vec3(0.98, 0.05, 0.12);
+            vec3 electricPink  = vec3(1.0, 0.30, 0.65); // Triggered during emotional intensity/treble spikes
+            vec3 polishedSilver = vec3(0.98, 0.95, 1.0);
+
+            // Line shifts colors dynamically mapping to vocal audio performance energy
+            vec3 currentPulseColor = mix(darkObsidian, activeCrimson, min(u_vol * 3.5, 1.0));
+            
+            // Blend into bright pink gradients during higher-frequency voice hits
+            currentPulseColor = mix(currentPulseColor, electricPink, min(u_treble * 2.5, 1.0));
+
+            // Accumulate physical structural lightning models
+            vec3 lightComposition = currentPulseColor * (diff * 0.85 + 0.25);
+            
+            // Add hyper-bright mirror highlight reflections based on sound speed spikes
+            lightComposition += polishedSilver * spec * (0.8 + u_vol * 1.6);
+            
+            // Rim/Fresnel illumination glow boundary lines
+            float rim = pow(1.0 - max(dot(n, viewDir), 0.0), 3.0);
+            lightComposition += mix(activeCrimson, electricPink, u_treble) * rim * (0.35 + u_bass * 0.75);
+
+            finalColor = lightComposition;
         }
 
-        function loop(timestamp) {
-            requestAnimationFrame(loop);
-            resizeCanvas();
+        // Ambient background volumetric pulse tracking perfectly with the heartbeat structure
+        float backgroundGlow = 1.0 - length(uv - vec2(0.0, sin(uv.x * 2.5 - u_time * 4.5) * 0.15));
+        finalColor += vec3(0.14, 0.0, 0.02) * pow(max(backgroundGlow, 0.0), 5.5) * (0.4 + u_vol * 2.2);
 
-            const t = timestamp * 0.001;
+        // Smooth viewport focus vignette
+        float vignette = uv.x * uv.x + uv.y * uv.y;
+        finalColor *= (1.0 - vignette * 0.45);
 
-            if (isRunning && analyser) {
-                analyser.getByteFrequencyData(freqData);
-                analyser.getByteTimeDomainData(timeData);
+        fragColor = vec4(finalColor, 1.0);
+    }
+`;
 
-                let rmsSum = 0;
-                for(let i=0; i<timeData.length; i++) {
-                    let v = (timeData[i] - 128) / 128;
-                    rmsSum += v * v;
-                }
-                let rms = Math.sqrt(rmsSum / timeData.length);
+function createShader(gl, type, source) {
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        console.error(gl.getShaderInfoLog(shader));
+        gl.deleteShader(shader);
+        return null;
+    }
+    return shader;
+}
 
-                const sr = audioCtx.sampleRate;
-                const bass = getBandEnergy(freqData, sr, 20, 200);
-                const mid = getBandEnergy(freqData, sr, 200, 2200);
-                const high = getBandEnergy(freqData, sr, 2200, 11000);
+// Compile and initialize shader binaries
+const vs = createShader(gl, gl.VERTEX_SHADER, vsSource);
+const fs = createShader(gl, gl.FRAGMENT_SHADER, fsSource);
+const program = gl.createProgram();
+gl.attachShader(program, vs);
+gl.attachShader(program, fs);
+gl.linkProgram(program);
 
-                sRMS = sRMS * (1 - sm) + rms * sm * 4.0;
-                sBass = sBass * (1 - sm) + bass * sm * 4.0;
-                sMid = sMid * (1 - sm) + mid * sm * 3.5;
-                sHigh = sHigh * (1 - sm) + high * sm * 4.5;
+const positionAttributeLocation = gl.getAttribLocation(program, "position");
+const positionBuffer = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+    -1, -1,   1, -1,  -1,  1,
+    -1,  1,   1, -1,   1,  1,
+]), gl.STATIC_DRAW);
 
-                updatePulseStatus();
-            } else {
-                // Base rest cycle rhythms calculated before user interaction
-                sRMS = sRMS * 0.95 + 0.05 * 0.05;
-                sBass = sBass * 0.95 + 0.08 * 0.05;
-                sMid = sMid * 0.95 + 0.05 * 0.05;
-                sHigh = sHigh * 0.95 + 0.02 * 0.05;
-            }
+const vao = gl.createVertexArray();
+gl.bindVertexArray(vao);
+gl.enableVertexAttribArray(positionAttributeLocation);
+gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
 
-            gl.clearColor(0.01, 0.0, 0.002, 1.0);
-            gl.clear(gl.COLOR_BUFFER_BIT);
+// Map global Uniform references
+const resLoc = gl.getUniformLocation(program, "u_resolution");
+const timeLoc = gl.getUniformLocation(program, "u_time");
+const volLoc = gl.getUniformLocation(program, "u_vol");
+const bassLoc = gl.getUniformLocation(program, "u_bass");
+const trebleLoc = gl.getUniformLocation(program, "u_treble");
 
-            gl.useProgram(program);
-            gl.bindVertexArray(vao);
+// Audio Handling Variables
+let analyser, freqData, audioContextCreated = false;
+let sVol = 0, sBass = 0, sTreble = 0;
+const sm = 0.09; // Low-pass filter smoothing inertia coefficient
 
-            gl.uniform2f(resLoc, gl.canvas.width, gl.canvas.height);
-            gl.uniform1f(timeLoc, t);
-            gl.uniform1f(rmsLoc, sRMS);
-            gl.uniform1f(bassLoc, sBass);
-            gl.uniform1f(midLoc, sMid);
-            gl.uniform1f(highLoc, sHigh);
+startBtn.addEventListener("click", async () => {
+    if (audioContextCreated) return;
 
-            gl.drawArrays(gl.TRIANGLES, 0, 6);
-        }
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 512;
+        analyser.smoothingTimeConstant = 0.78;
+        
+        freqData = new Uint8Array(analyser.frequencyBinCount);
+        const source = audioCtx.createMediaStreamSource(stream);
+        source.connect(analyser);
 
-        if (!isRunning) {
-            loop(0);
-        }
-    </script>
+        startBtn.textContent = "Mic Connected";
+        startBtn.classList.add("active");
+        audioContextCreated = true;
+    } catch (err) {
+        console.error("Microphone pipeline initialization failure:", err);
+        startBtn.textContent = "Error Accessing Mic";
+    }
+});
+
+function processAudioData() {
+    if (!analyser) return { vol: 0, bass: 0, treble: 0 };
+    
+    analyser.getByteFrequencyData(freqData);
+
+    let volSum = 0, bassSum = 0, trebleSum = 0;
+    const totalBins = freqData.length;
+    const bassRange = Math.floor(totalBins * 0.15);
+    const trebleStart = Math.floor(totalBins * 0.45);
+
+    for (let i = 0; i < totalBins; i++) {
+        const val = freqData[i];
+        volSum += val;
+        if (i < bassRange) bassSum += val;
+        if (i >= trebleStart) trebleSum += val;
+    }
+
+    return {
+        vol: (volSum / totalBins) / 255,
+        bass: (bassSum / bassRange) / 255,
+        treble: (trebleSum / (totalBins - trebleStart)) / 255
+    };
+}
+
+function updateHUDText() {
+    const tracker = document.getElementById('subtitle');
+    if (!audioContextCreated) return;
+
+    if (sVol < 0.04) {
+        tracker.innerText = "Biometric Sync: Resting Pulse (Steady)";
+        tracker.style.color = "rgba(255, 60, 80, 0.4)";
+    } else if (sBass > 0.48) {
+        tracker.innerText = "Biometric Sync: Ventricular Contraction Peak";
+        tracker.style.color = "rgba(255, 40, 40, 0.95)";
+    } else if (sTreble > 0.4) {
+        tracker.innerText = "Biometric Sync: High Frequency Arrhythmia";
+        tracker.style.color = "rgba(255, 110, 190, 0.95)";
+    } else {
+        tracker.innerText = "Biometric Sync: Active Cardiovascular Dialogue";
+        tracker.style.color = "rgba(255, 90, 110, 0.75)";
+    }
+}
+
+function resizeCanvas() {
+    if (canvas.width !== window.innerWidth || canvas.height !== window.innerHeight) {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    }
+}
+
+let lastTime = 0;
+let t = 0;
+
+function animate(timestamp) {
+    requestAnimationFrame(animate);
+    resizeCanvas();
+
+    // Smooth time pacing loop
+    const delta = (timestamp - lastTime) * 0.001;
+    lastTime = timestamp;
+    t += delta;
+
+    let rawAudio = processAudioData();
+
+    if (audioContextCreated) {
+        // Interpolate current values over physics engine dampening coefficients
+        sVol = sVol * (1 - sm) + rawAudio.vol * sm;
+        sBass = sBass * (1 - sm) + rawAudio.bass * sm;
+        sTreble = sTreble * (1 - sm) + rawAudio.treble * sm;
+        updateHUDText();
+    } else {
+        // Aesthetic resting cycle variations before button click
+        sVol = sVol * 0.95 + 0.04 * 0.05;
+        sBass = sBass * 0.95 + 0.07 * 0.05;
+        sTreble = sTreble * 0.95 + 0.03 * 0.05;
+    }
+
+    // Refresh context buffers
+    gl.clearColor(0.01, 0.0, 0.003, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    gl.useProgram(program);
+    gl.bindVertexArray(vao);
+
+    // Stream inputs to uniform shader memory
+    gl.uniform2f(resLoc, gl.canvas.width, gl.canvas.height);
+    gl.uniform1f(timeLoc, t);
+    gl.uniform1f(volLoc, sVol * 4.0);     // Boosted scalar modifiers for high-contrast 3D rendering
+    gl.uniform1f(bassLoc, sBass * 3.5);
+    gl.uniform1f(trebleLoc, sTreble * 4.5);
+
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+}
+
+// Kickstart animation architecture
+animate(0);
+</script>
 </body>
 </html>
