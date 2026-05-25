@@ -1,50 +1,77 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
 <meta charset="UTF-8">
-<title>Molten Gold Voice Visualizer</title>
+
+<title>Molten Gold Voice Engine</title>
 
 <style>
 
-body{
+html,body{
+
 margin:0;
 overflow:hidden;
-background:black;
+background:#000;
+height:100%;
+
 font-family:Arial,sans-serif;
+
 }
 
 canvas{
+
 display:block;
+
 }
 
-#ui{
+#panel{
 
 position:absolute;
-top:20px;
-left:20px;
-z-index:100;
+left:40px;
+top:40px;
 color:#d4af37;
+z-index:100;
 
-}
-
-button{
-
-padding:14px 25px;
-border:none;
-background:#d4af37;
-color:black;
-cursor:pointer;
-font-size:15px;
-font-weight:bold;
-border-radius:8px;
+opacity:.9;
 
 }
 
 h1{
 
-font-size:18px;
+font-weight:200;
+letter-spacing:8px;
+margin:0;
+
+font-size:40px;
+
+}
+
+.small{
+
+font-size:12px;
 letter-spacing:4px;
-font-weight:100;
+opacity:.6;
+
+}
+
+button{
+
+margin-top:30px;
+
+background:transparent;
+color:#d4af37;
+
+border:1px solid rgba(212,175,55,.5);
+
+padding:15px 25px;
+
+cursor:pointer;
+
+font-size:12px;
+
+letter-spacing:2px;
 
 }
 
@@ -54,37 +81,45 @@ font-weight:100;
 
 <body>
 
-<div id="ui">
+<div id="panel">
 
-<h1>MOLTEN GOLD</h1>
+<h1>VOICE PATTERN</h1>
 
-<button id="startBtn">
+<div class="small">
+
+WEB AUDIO / MOLTEN GOLD ENGINE
+
+</div>
+
+<button id="mic">
+
 ACTIVATE MIC
+
 </button>
 
 </div>
 
-<canvas id="canvas"></canvas>
+
+<canvas id="c"></canvas>
+
 
 <script>
 
-const canvas =
-document.getElementById("canvas");
+const canvas=
+document.getElementById("c");
 
-const ctx =
+const ctx=
 canvas.getContext("2d");
 
 let W,H;
 
 function resize(){
 
-W=
-canvas.width=
-innerWidth;
+W=canvas.width=
+window.innerWidth;
 
-H=
-canvas.height=
-innerHeight;
+H=canvas.height=
+window.innerHeight;
 
 }
 
@@ -96,17 +131,16 @@ resize
 );
 
 
-// AUDIO
-
 let analyser;
-let freqData;
+let data;
+
 
 document.getElementById(
-"startBtn"
+"mic"
 )
-.addEventListener(
-"click",
+.onclick=
 async()=>{
+
 
 const stream=
 await navigator
@@ -124,7 +158,7 @@ audioCtx
 
 analyser.fftSize=2048;
 
-freqData=
+data=
 new Uint8Array(
 analyser.frequencyBinCount
 );
@@ -139,75 +173,67 @@ source.connect(
 analyser
 );
 
-}
-);
-
-
-function getAudioData(){
-
-if(!analyser){
-
-return{
-vol:0,
-bass:0,
-treble:0
 };
 
-}
+
+function getAudio(){
+
+if(!analyser)
+return{
+vol:0,
+bass:0
+};
 
 analyser.getByteFrequencyData(
-freqData
+data
 );
 
 let vol=0;
 let bass=0;
-let treble=0;
 
 
-for(let i=0;i<freqData.length;i++){
+for(
+let i=0;
+i<data.length;
+i++
+){
 
-vol+=freqData[i];
-
-}
-
-for(let i=0;i<40;i++){
-
-bass+=freqData[i];
+vol+=data[i];
 
 }
 
-for(let i=250;i<500;i++){
+for(
+let i=0;
+i<40;
+i++
+){
 
-treble+=freqData[i];
+bass+=data[i];
 
 }
 
 vol/=
-freqData.length*255;
+data.length*255;
 
 bass/=
 40*255;
 
-treble/=
-250*255;
-
 return{
-
 vol,
-bass,
-treble
-
+bass
 };
 
 }
 
 
 
-// GOLD MASS
-
 const blobs=[];
 
-for(let i=0;i<15;i++){
+for(
+let i=0;
+i<12;
+i++
+){
 
 blobs.push({
 
@@ -219,27 +245,25 @@ Math.PI
 2,
 
 orbit:
+100+
 Math.random()
 *
-250
-+
-60,
+220,
 
 size:
+50+
 Math.random()
 *
-80
-+
-80,
+70,
 
 speed:
 (
 Math.random()
 -
-0.5
+.5
 )
 *
-0.01,
+.01,
 
 offset:
 Math.random()
@@ -251,44 +275,56 @@ Math.random()
 }
 
 
-// DROPLETS
+const particles=[];
 
-const droplets=[];
+for(
+let i=0;
+i<150;
+i++
+){
 
-for(let i=0;i<50;i++){
+particles.push({
 
-droplets.push({
+x:
+Math.random()
+*W,
 
-x:Math.random()*innerWidth,
-y:Math.random()*innerHeight,
+y:
+Math.random()
+*H,
 
 size:
-Math.random()*5,
+Math.random()*4,
 
 speed:
-Math.random()*2
+Math.random()*1.5
 
 });
 
 }
 
 
+
 let t=0;
 
-function draw(){
 
-requestAnimationFrame(draw);
+function render(){
 
-t+=0.01;
+requestAnimationFrame(
+render
+);
+
+t+=.01;
+
 
 const audio=
-getAudioData();
+getAudio();
 
 
-// slow trails
+// background fade
 
 ctx.fillStyle=
-"rgba(0,0,0,.06)";
+"rgba(0,0,0,.08)";
 
 ctx.fillRect(
 0,
@@ -298,33 +334,27 @@ H
 );
 
 
-ctx.save();
-
-ctx.shadowBlur=
-80;
-
-ctx.shadowColor=
-"#ffcc00";
+// metallic liquid body
 
 ctx.globalCompositeOperation=
-"screen";
+"lighter";
 
 
+for(
+let b of blobs
+){
 
-// GOLD BODY
-
-for(let b of blobs){
 
 b.angle+=
-b.speed
-*
+b.speed*
 (
 1+
-audio.bass*10
+audio.bass*6
 );
 
 
-const x=
+let x=
+
 W/2+
 
 Math.cos(
@@ -334,7 +364,8 @@ b.angle
 b.orbit;
 
 
-const y=
+let y=
+
 H/2+
 
 Math.sin(
@@ -344,34 +375,33 @@ b.angle
 b.orbit;
 
 
+let r=
 
-let pulse=
+b.size+
 
 Math.sin(
+
 t*4+
+
 b.offset
+
 )
+
 *
+
 (
-40
-+
+30+
 audio.vol*100
 );
 
 
 
-let r=
-b.size+
-pulse;
-
-
-
-const gradient=
+let g=
 
 ctx.createRadialGradient(
 
-x-r*.2,
-y-r*.2,
+x-r*.4,
+y-r*.4,
 0,
 
 x,
@@ -381,73 +411,91 @@ r
 );
 
 
-gradient.addColorStop(
+// realistic gold
+
+g.addColorStop(
 0,
-"#fff8dc"
+"#ffffff"
 );
 
-gradient.addColorStop(
-0.2,
-"#ffd700"
+g.addColorStop(
+0.08,
+"#fff4d6"
 );
 
-gradient.addColorStop(
+g.addColorStop(
+0.25,
+"#ffe082"
+);
+
+g.addColorStop(
 0.5,
-"#ffbf00"
-);
-
-gradient.addColorStop(
-0.8,
 "#d4af37"
 );
 
-gradient.addColorStop(
+g.addColorStop(
+0.7,
+"#8a6500"
+);
+
+g.addColorStop(
 1,
-"#3d2400"
+"#120800"
 );
 
 
+
+ctx.shadowBlur=
+100;
+
+ctx.shadowColor=
+"#ffcf40";
+
 ctx.fillStyle=
-gradient;
+g;
 
 
 ctx.beginPath();
-
 
 for(
 let a=0;
 a<
 Math.PI*2;
-a+=0.1
+a+=.06
 ){
 
-let distortion=
+let wave=
 
 Math.sin(
-a*6+
-t*5+
+
+a*7+
+
+t*4+
+
 b.offset
+
 )
+
 *
+
 (
-20
-+
-audio.bass*80
+25+
+audio.bass*100
 );
 
 
 let rr=
-r+
-distortion;
+r+wave;
 
 
-const px=
+let px=
 x+
 Math.cos(a)
 *
 rr;
 
-const py=
+
+let py=
 y+
 Math.sin(a)
 *
@@ -461,7 +509,8 @@ px,
 py
 );
 
-}else{
+}
+else{
 
 ctx.lineTo(
 px,
@@ -472,6 +521,7 @@ py
 
 }
 
+
 ctx.closePath();
 
 ctx.fill();
@@ -481,37 +531,43 @@ ctx.fill();
 
 // floating droplets
 
-for(let d of droplets){
-
-d.y+=
-d.speed+
-audio.vol*5;
-
-if(
-d.y>
-H+10
+for(
+let p of particles
 ){
 
-d.y=-10;
-d.x=
+p.y+=
+p.speed+
+audio.vol*3;
+
+if(
+p.y>
+H
+){
+
+p.y=0;
+p.x=
 Math.random()
-*W;
+*
+W;
 
 }
-
 
 ctx.beginPath();
 
 ctx.fillStyle=
-"#ffd700";
+"rgba(255,220,100,.8)";
 
 ctx.arc(
-d.x,
-d.y,
-d.size+
-audio.treble*8,
+
+p.x,
+p.y,
+
+p.size,
+
 0,
+
 Math.PI*2
+
 );
 
 ctx.fill();
@@ -519,12 +575,13 @@ ctx.fill();
 }
 
 
-ctx.restore();
+ctx.globalCompositeOperation=
+"source-over";
 
 
-// reflection strip
+// reflective floor
 
-const reflection=
+let reflection=
 
 ctx.createLinearGradient(
 0,
@@ -535,7 +592,7 @@ H
 
 reflection.addColorStop(
 0,
-"rgba(255,200,0,.2)"
+"rgba(255,180,0,.15)"
 );
 
 reflection.addColorStop(
@@ -553,12 +610,13 @@ W,
 H
 );
 
-
 }
 
-draw();
+
+render();
 
 </script>
 
 </body>
+
 </html>
